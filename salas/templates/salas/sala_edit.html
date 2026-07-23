@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Editar sala - {{ sala.nome }}</title>
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; background: #f4f7fb; color: #1f2937; }
+        .container { max-width: 720px; margin: 40px auto; padding: 24px; }
+        .card { background: white; border-radius: 16px; padding: 28px; box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08); }
+        .form-group { margin-bottom: 16px; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; }
+        input, select { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; }
+        button { background: #2563eb; color: white; border: none; border-radius: 8px; padding: 10px 16px; cursor: pointer; font-weight: 600; }
+        .warning { color: #dc2626; margin-top: 8px; }
+        .actions { margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap; }
+        a { color: #2563eb; text-decoration: none; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>Editar sala</h1>
+            <p>Atualize os dados da sala <strong>{{ sala.nome }}</strong>.</p>
+            <form method="post">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="form-group">
+                        {{ field.label_tag }}
+                        {{ field }}
+                        {% if field.errors %}
+                            <div class="warning">{{ field.errors|striptags }}</div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                <div class="actions">
+                    <button type="submit">Salvar alterações</button>
+                    <a href="{% url 'index' %}">Voltar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

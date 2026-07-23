@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ sala.nome }} - Servidor de Arquivos Uditech</title>
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; background: #f4f7fb; color: #1f2937; }
+        .container { max-width: 1180px; margin: 0 auto; padding: 32px 20px 48px; min-height: 100vh; }
+        .card { background: white; border-radius: 16px; padding: 28px; box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08); margin-bottom: 20px; }
+        .hero { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; padding: 28px; border-radius: 16px; }
+        .hero h1 { margin: 0 0 8px; }
+        .grid { display: grid; grid-template-columns: 1.3fr 0.9fr; gap: 24px; align-items: start; }
+        .list { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+        .item { border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+        .dropzone { border: 2px dashed #93c5fd; border-radius: 12px; padding: 28px; text-align: center; color: #1d4ed8; background: #eff6ff; min-height: 200px; display: flex; flex-direction: column; justify-content: center; }
+        .dropzone.dragover { background: #dbeafe; border-color: #2563eb; }
+        input[type="password"] { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box; }
+        button { background: #2563eb; color: white; border: none; border-radius: 8px; padding: 10px 16px; cursor: pointer; font-weight: 600; }
+        .warning { color: #dc2626; margin-top: 8px; }
+        .muted { color: #6b7280; }
+        .pill { display: inline-block; padding: 4px 8px; border-radius: 999px; font-size: 0.8rem; background: #dbeafe; color: #1d4ed8; }
+        .actions { display: flex; gap: 8px; align-items: center; }
+        .icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 10px; background: #eff6ff; color: #2563eb; text-decoration: none; font-size: 1rem; font-weight: 700; }
+        .icon-btn:hover { background: #dbeafe; }
+        .file-meta { flex: 1; }
+        .preview-modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 1000; }
+        .preview-modal.open { display: flex; }
+        .preview-content { width: min(1100px, 100%); max-height: 90vh; background: white; border-radius: 16px; padding: 18px; overflow: auto; box-shadow: 0 20px 45px rgba(0,0,0,0.25); }
+        .preview-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .preview-body { min-height: 320px; }
+        .preview-body img { max-width: 100%; max-height: 70vh; border-radius: 8px; display: block; margin: 0 auto; }
+        .preview-body iframe { width: 100%; min-height: 70vh; border: none; border-radius: 8px; }
+        .preview-body pre { white-space: pre-wrap; word-break: break-word; margin: 0; font-family: Consolas, monospace; }
+        .close-btn { border: none; background: #f3f4f6; color: #374151; width: 38px; height: 38px; border-radius: 999px; cursor: pointer; font-size: 1.1rem; }
+        @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } .item { flex-direction: column; align-items: flex-start; } .actions { margin-top: 8px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <section class="hero">
+            <h1>{{ sala.nome }}</h1>
+            <p>Gerencie os arquivos desta sala de forma simples e rápida.</p>
+        </section>
+
+        <div class="grid">
+            <div class="card">
+                <h2>Arquivos da sala</h2>
+                {% if authenticated %}
+                    {% if arquivos %}
+                        <ul class="list">
+                            {% for arquivo in arquivos %}
+                                <li class="item">
+                                    <div class="file-meta">
+                                        <strong>{{ arquivo.nome_exibicao }}</strong>
+                                        <div class="muted">Enviado por {{ arquivo.enviado_por.username|default:"anônimo" }} em {{ arquivo.enviado_em|date:"d/m/Y H:i" }}</div>
+                                    </div>
+                                    <div class="actions">
+                                        {% with ext=arquivo.nome_exibicao|lower|slice:"-4:" %}
+                                            {% if ext == '.pdf' or ext == '.png' or ext == '.jpg' or ext == '.jpeg' or ext == '.gif' %}
+                                                <a class="icon-btn" href="#" onclick="openPreview('{{ arquivo.arquivo.url }}', '{{ ext|cut:'.' }}', '{{ arquivo.nome_exibicao }}'); return false;" title="Visualizar">👁️</a>
+                                            {% elif ext == '.txt' %}
+                                                <a class="icon-btn" href="#" onclick="openPreview('{{ arquivo.arquivo.url }}', 'txt', '{{ arquivo.nome_exibicao }}'); return false;" title="Visualizar">👁️</a>
+                                            {% else %}
+                                                <a class="icon-btn" href="{{ arquivo.arquivo.url }}" target="_blank" title="Visualizar">📄</a>
+                                            {% endif %}
+                                        {% endwith %}
+                                        <a class="icon-btn" href="{{ arquivo.arquivo.url }}" download title="Baixar">⬇️</a>
+                                        <span class="pill">{{ arquivo.arquivo.size|filesizeformat }}</span>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="muted">Nenhum arquivo enviado ainda.</p>
+                    {% endif %}
+                {% else %}
+                    <form method="post">
+                        {% csrf_token %}
+                        <label for="senha">Senha da sala</label>
+                        <input id="senha" type="password" name="senha" required>
+                        {% if senha_error %}
+                            <div class="warning">{{ senha_error }}</div>
+                        {% endif %}
+                        <div style="margin-top: 12px;"><button type="submit">Abrir sala</button></div>
+                    </form>
+                {% endif %}
+            </div>
+
+            <div class="card">
+                <h2>Enviar arquivos</h2>
+                {% if authenticated %}
+                    <form method="post" enctype="multipart/form-data" id="upload-form">
+                        {% csrf_token %}
+                        <div id="dropzone" class="dropzone">
+                            <p><strong>Arraste e solte arquivos aqui</strong></p>
+                            <p class="muted">ou clique para selecionar do computador</p>
+                            <input type="file" name="files" id="file-input" multiple style="display:none;">
+                        </div>
+                        <div style="margin-top: 12px;"><button type="submit">Enviar arquivos</button></div>
+                    </form>
+                {% else %}
+                    <p class="muted">Digite a senha para visualizar os arquivos e fazer uploads.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div id="preview-modal" class="preview-modal">
+        <div class="preview-content">
+            <div class="preview-header">
+                <strong id="preview-title">Visualização</strong>
+                <button class="close-btn" onclick="closePreview()" title="Fechar">✕</button>
+            </div>
+            <div id="preview-body" class="preview-body"></div>
+        </div>
+    </div>
+
+    <script>
+        const dropzone = document.getElementById('dropzone');
+        const form = document.getElementById('upload-form');
+        const fileInput = document.getElementById('file-input');
+        const previewModal = document.getElementById('preview-modal');
+        const previewTitle = document.getElementById('preview-title');
+        const previewBody = document.getElementById('preview-body');
+
+        function openPreview(url, type, name) {
+            previewTitle.textContent = name;
+            previewModal.classList.add('open');
+            if (type === 'pdf') {
+                previewBody.innerHTML = '<iframe src="' + url + '"></iframe>';
+            } else if (['png', 'jpg', 'jpeg', 'gif'].includes(type)) {
+                previewBody.innerHTML = '<img src="' + url + '" alt="' + name + '">';
+            } else if (type === 'txt') {
+                fetch(url)
+                    .then(response => response.text())
+                    .then(text => {
+                        previewBody.innerHTML = '<pre>' + text + '</pre>';
+                    });
+            } else {
+                previewBody.innerHTML = '<div class="muted">Preview não disponível para este tipo de arquivo.</div>';
+            }
+        }
+
+        function closePreview() {
+            previewModal.classList.remove('open');
+            previewBody.innerHTML = '';
+        }
+
+        if (previewModal) {
+            previewModal.addEventListener('click', (event) => {
+                if (event.target === previewModal) {
+                    closePreview();
+                }
+            });
+        }
+
+        if (dropzone && form) {
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (event) => {
+                    event.preventDefault();
+                    dropzone.classList.add('dragover');
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (event) => {
+                    event.preventDefault();
+                    dropzone.classList.remove('dragover');
+                });
+            });
+
+            dropzone.addEventListener('drop', (event) => {
+                if (event.dataTransfer && event.dataTransfer.files) {
+                    fileInput.files = event.dataTransfer.files;
+                }
+            });
+
+            dropzone.addEventListener('click', () => fileInput.click());
+        }
+    </script>
+</body>
+</html>

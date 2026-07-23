@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Excluir sala - {{ sala.nome }}</title>
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; background: #f4f7fb; color: #1f2937; }
+        .container { max-width: 720px; margin: 40px auto; padding: 24px; }
+        .card { background: white; border-radius: 16px; padding: 28px; box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08); }
+        .warning { color: #b91c1c; margin-top: 12px; }
+        .actions { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+        button { background: #dc2626; color: white; border: none; border-radius: 8px; padding: 10px 16px; cursor: pointer; font-weight: 600; }
+        a { color: #2563eb; text-decoration: none; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>Excluir sala</h1>
+            <p>Tem certeza que deseja excluir a sala <strong>{{ sala.nome }}</strong>? Esta ação apagará também todos os arquivos associados.</p>
+            <div class="warning">Esta operação não pode ser desfeita.</div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="actions">
+                    <button type="submit">Excluir sala</button>
+                    <a href="{% url 'index' %}">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

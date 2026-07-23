@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Servidor de Arquivos Uditech</title>
+    <style>
+        :root {
+            color-scheme: light;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            margin: 0;
+            background: #f4f7fb;
+            color: #1f2937;
+        }
+        .container {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 32px 20px 48px;
+        }
+        .hero {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            padding: 28px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(37, 99, 235, 0.25);
+        }
+        .hero h1 {
+            margin: 0 0 8px;
+            font-size: 2rem;
+        }
+        .hero p {
+            margin: 0;
+            opacity: 0.95;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            margin-top: 24px;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+        }
+        .card h2 {
+            margin-top: 0;
+            margin-bottom: 16px;
+            font-size: 1.2rem;
+        }
+        .salas-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            gap: 12px;
+        }
+        .sala-item {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+        }
+        .sala-item strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+        .form-group {
+            margin-bottom: 12px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+        .empty-state {
+            color: #6b7280;
+            padding: 12px 0;
+        }
+        .actions {
+            margin-top: 16px;
+        }
+        .warning {
+            color: #dc2626;
+            margin-top: 8px;
+        }
+        @media (max-width: 760px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <section class="hero">
+            <h1>Servidor de Arquivos Uditech</h1>
+            <p>Organize aulas, materiais e conteúdos em salas seguras e acessíveis.</p>
+        </section>
+
+        <div class="grid">
+            <section class="card">
+                <h2>Salas disponíveis</h2>
+                {% if salas %}
+                    <ul class="salas-list">
+                        {% for sala in salas %}
+                            <li class="sala-item">
+                                <div>
+                                    <strong>{{ sala.nome }}</strong>
+                                    <span class="badge">{{ sala.professor.username }}</span>
+                                </div>
+                                <div style="text-align: right; color: #6b7280; font-size: 0.9rem;">
+                                    <a href="{% url 'sala_detail' sala.pk %}" style="color: #2563eb; font-weight: 600; text-decoration: none;">Abrir sala</a>
+                                    <div style="margin-top: 6px;">
+                                        {% if sala.alunos_podem_enviar %}
+                                            Alunos podem enviar
+                                        {% else %}
+                                            Somente professor
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="empty-state">Nenhuma sala cadastrada ainda.</p>
+                {% endif %}
+            </section>
+
+            <section class="card">
+                <h2>Acesso</h2>
+                {% if not user_authenticated %}
+                    <div class="actions" style="display: grid; gap: 12px;">
+                        <form method="get">
+                            <input type="hidden" name="login" value="admin">
+                            <button type="submit">Logar como admin</button>
+                        </form>
+                        <form method="get">
+                            <input type="hidden" name="login" value="professor">
+                            <button type="submit">Logar como professor</button>
+                        </form>
+                        <form method="get">
+                            <input type="hidden" name="create" value="1">
+                            <button type="submit">Criar sala</button>
+                        </form>
+                    </div>
+                    {% if show_login_form %}
+                        <div style="margin-top: 20px;">
+                            <h3>{% if login_type == 'admin' %}Login Admin{% else %}Login Professor{% endif %}</h3>
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="{% if login_type == 'admin' %}login_admin{% else %}login_professor{% endif %}">
+                                <div class="form-group">
+                                    <label for="username">Usuário</label>
+                                    <input id="username" type="text" name="username" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="password">Senha</label>
+                                    <input id="password" type="password" name="password" required>
+                                </div>
+                                {% if login_error %}
+                                    <div class="warning">{{ login_error }}</div>
+                                {% endif %}
+                                <button type="submit">Entrar</button>
+                            </form>
+                        </div>
+                    {% endif %}
+                    {% if show_create_flow %}
+                        {% if show_create_form %}
+                            <div class="card" style="margin-top: 20px;">
+                                <h3>Criar sala</h3>
+                                {% if sala_success %}
+                                    <div style="color: #166534; margin-bottom: 10px;">{{ sala_success }}</div>
+                                {% elif create_error %}
+                                    <div class="warning">{{ create_error }}</div>
+                                {% endif %}
+                                <form method="post">
+                                    {% csrf_token %}
+                                    {% for field in sala_form %}
+                                        <div class="form-group">
+                                            {{ field.label_tag }}
+                                            {{ field }}
+                                            {% if field.errors %}
+                                                <div class="warning">{{ field.errors|striptags }}</div>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                    <button type="submit">Criar sala</button>
+                                </form>
+                            </div>
+                        {% else %}
+                            <div class="card" style="margin-top: 20px;">
+                                <h3>Conta admin</h3>
+                                {% if admin_auth_error %}
+                                    <div class="warning">{{ admin_auth_error }}</div>
+                                {% endif %}
+                                <form method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="step" value="auth">
+                                    <div class="form-group">
+                                        <label for="admin">Administrador</label>
+                                        <select id="admin" name="admin" required>
+                                            <option value="">Selecione uma conta admin</option>
+                                            {% for admin in admin_accounts %}
+                                                <option value="{{ admin.pk }}">{{ admin.username }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="password">Senha</label>
+                                        <input id="password" type="password" name="password" required>
+                                    </div>
+                                    <button type="submit">Entrar</button>
+                                </form>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                {% elif is_staff %}
+                    <div class="empty-state">Autenticado como admin {{ request.user.username }}.</div>
+                    <div class="card" style="margin-top: 20px;">
+                        <h3>Cadastrar professor</h3>
+                        {% if professor_success %}
+                            <div style="color: #166534; margin-bottom: 10px;">{{ professor_success }}</div>
+                        {% elif professor_error %}
+                            <div class="warning">{{ professor_error }}</div>
+                        {% endif %}
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="create_professor">
+                            {% for field in professor_form %}
+                                <div class="form-group">
+                                    {{ field.label_tag }}
+                                    {{ field }}
+                                    {% if field.errors %}
+                                        <div class="warning">{{ field.errors|striptags }}</div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                            <button type="submit">Cadastrar professor</button>
+                        </form>
+                    </div>
+                    <div class="card" style="margin-top: 20px;">
+                        <h3>Criar sala</h3>
+                        {% if sala_success %}
+                            <div style="color: #166534; margin-bottom: 10px;">{{ sala_success }}</div>
+                        {% elif create_error %}
+                            <div class="warning">{{ create_error }}</div>
+                        {% endif %}
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="create_sala">
+                            {% for field in sala_form %}
+                                <div class="form-group">
+                                    {{ field.label_tag }}
+                                    {{ field }}
+                                    {% if field.errors %}
+                                        <div class="warning">{{ field.errors|striptags }}</div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                            <button type="submit">Criar sala</button>
+                        </form>
+                    </div>
+                    <div class="actions" style="margin-top: 16px;">
+                        <a href="{% url 'logout' %}" style="color: #2563eb; font-weight: 600; text-decoration: none;">Sair</a>
+                    </div>
+                {% else %}
+                    <div class="empty-state">Autenticado como professor {{ request.user.username }}.</div>
+                    {% if professor_rooms %}
+                        <h3 style="margin-top: 16px;">Minhas salas</h3>
+                        <ul class="salas-list">
+                            {% for sala in professor_rooms %}
+                                <li class="sala-item">
+                                    <div>
+                                        <strong>{{ sala.nome }}</strong>
+                                        <span class="badge">{{ sala.alunos_podem_enviar|yesno:"Uploads habilitados,Uploads desabilitados" }}</span>
+                                    </div>
+                                    <div style="text-align: right;"> 
+                                        <a href="{% url 'sala_detail' sala.pk %}" style="color: #2563eb; font-weight: 600; text-decoration: none;">Abrir sala</a>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="empty-state">Nenhuma sala vinculada a este professor.</p>
+                    {% endif %}
+                    <div class="actions" style="margin-top: 16px;">
+                        <a href="{% url 'logout' %}" style="color: #2563eb; font-weight: 600; text-decoration: none;">Sair</a>
+                    </div>
+                {% endif %}
+            </section>
+        </div>
+    </div>
+</body>
+</html>
