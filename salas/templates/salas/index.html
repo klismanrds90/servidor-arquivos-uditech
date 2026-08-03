@@ -151,6 +151,12 @@
                                             Somente professor
                                         {% endif %}
                                     </div>
+                                    {% if user.is_authenticated and (user.is_staff or user == sala.professor) %}
+                                        <div style="margin-top:8px;">
+                                            <a href="{% url 'sala_edit' sala.pk %}" style="margin-right:8px; color:#059669; font-weight:600; text-decoration:none;">Editar</a>
+                                            <a href="{% url 'sala_delete' sala.pk %}" style="color:#b91c1c; font-weight:600; text-decoration:none;">Excluir</a>
+                                        </div>
+                                    {% endif %}
                                 </div>
                             </li>
                         {% endfor %}
@@ -295,6 +301,7 @@
                         </form>
                     </div>
                     <div class="actions" style="margin-top: 16px;">
+                        <a href="{% url 'admin_dashboard' %}" style="margin-right:12px; color: #2563eb; font-weight: 600; text-decoration: none;">Painel Admin</a>
                         <a href="{% url 'logout' %}" style="color: #2563eb; font-weight: 600; text-decoration: none;">Sair</a>
                     </div>
                 {% else %}

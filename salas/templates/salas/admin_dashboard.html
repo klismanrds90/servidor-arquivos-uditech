@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Painel Admin - Professores</title>
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; background: #f4f7fb; color: #1f2937; }
+        .container { max-width: 980px; margin: 24px auto; padding: 20px; }
+        .card { background: white; border-radius: 12px; padding: 18px; box-shadow: 0 6px 18px rgba(15,23,42,0.06); }
+        .list { list-style:none; margin:0; padding:0; }
+        .item { display:flex; justify-content:space-between; align-items:center; padding:10px 8px; border-bottom:1px solid #eef2f7; }
+        a { color:#2563eb; text-decoration:none; font-weight:600; }
+        .actions { display:flex; gap:8px; }
+        button { background:#dc2626; color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h1>Painel Admin</h1>
+            <a href="{% url 'index' %}">Voltar</a>
+        </div>
+
+        <div class="card">
+            <h2>Professores cadastrados</h2>
+            {% if professors %}
+                <ul class="list">
+                    {% for p in professors %}
+                        <li class="item">
+                            <div>
+                                <strong>{{ p.username }}</strong>
+                                <div class="muted">ID: {{ p.pk }}</div>
+                            </div>
+                            <div class="actions">
+                                <a href="{% url 'professor_edit' p.pk %}">Editar</a>
+                                <form method="post" action="{% url 'professor_delete' p.pk %}" style="display:inline; margin:0;">
+                                    {% csrf_token %}
+                                    <button type="submit">Excluir</button>
+                                </form>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="muted">Nenhum professor cadastrado.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

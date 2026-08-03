@@ -7,6 +7,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from .consumers import notify_sala_change
 from .forms import ProfessorCreationForm, SalaCreateForm, SalaForm
 from .models import ArquivoSala, Sala
+from django.shortcuts import resolve_url
+from django.contrib.admin.views.decorators import staff_member_required
 
 
 def can_manage_sala(user, sala):
@@ -270,3 +272,47 @@ def sala_arquivos_json(request, pk):
             'size': arquivo['arquivo__size'],
         })
     return JsonResponse({'arquivos': data})
+
+
+@staff_member_required
+def admin_dashboard(request):
+    User = get_user_model()
+    professors = User.objects.filter(is_staff=False).order_by('username')
+    return render(request, 'salas/admin_dashboard.html', {
+        'professors': professors,
+    })
+
+
+@staff_member_required
+def professor_edit(request, pk):
+    User = get_user_model()
+    professor = get_object_or_404(User, pk=pk, is_staff=False)
+    error = None
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        if not username:
+            error = 'Nome de usuário é obrigatório.'
+        else:
+            professor.username = username
+            if password:
+                professor.set_password(password)
+            professor.save()
+            return redirect('admin_dashboard')
+
+    return render(request, 'salas/professor_edit.html', {
+        'professor': professor,
+        'error': error,
+    })
+
+
+@staff_member_required
+def professor_delete(request, pk):
+    User = get_user_model()
+    professor = get_object_or_404(User, pk=pk, is_staff=False)
+    if request.method == 'POST':
+        professor.delete()
+        return redirect('admin_dashboard')
+    return render(request, 'salas/professor_delete.html', {
+        'professor': professor,
+    })

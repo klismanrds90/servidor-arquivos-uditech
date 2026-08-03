@@ -43,6 +43,12 @@
             <p>Gerencie os arquivos desta sala de forma simples e rápida.</p>
         </section>
 
+            {% if can_manage %}
+                <div style="margin-left:auto; display:flex; gap:8px;">
+                    <a href="{% url 'sala_edit' sala.pk %}" class="icon-btn" style="background:#ecfdf5; color:#059669; padding:8px 12px; border-radius:8px; text-decoration:none;">Editar</a>
+                    <a href="{% url 'sala_delete' sala.pk %}" class="icon-btn" style="background:#fff1f2; color:#b91c1c; padding:8px 12px; border-radius:8px; text-decoration:none;">Excluir</a>
+                </div>
+            {% endif %}
         <div class="grid">
             <div class="card">
                 <h2>Arquivos da sala</h2>
